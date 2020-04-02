@@ -283,14 +283,33 @@ function setup (root) {
 }
 
 setup(window.document)
-for (let i = 0; i < window.frames.length; i++) {
-  const frame = window.frames[i]
-  const root = frame.document
-  setup(root)
-  const timer = setInterval(() => {
-    if (root == frame.document) return
-    clearTimeout(timer)
-    setup(frame.document)
-  }, 0)
-  root.addEventListener('readystatechange', e => clearTimeout(timer), { once: true })
-}
+
+// List of frames that are already set up
+let framesSetUp = [];
+
+// Frames might be inserted dynamically, so we keep polling
+setInterval(() => {
+
+  for (let i = 0; i < window.frames.length; i++) {
+    const frame = window.frames[i];
+
+    // Skip if already set up.
+    if (framesSetUp.includes(frame)) {
+      continue;
+    }
+
+    framesSetUp.push(frame);
+
+    const root = frame.document;
+    setup(root);
+    const timer = setInterval(() => {
+      if (root == frame.document) return;
+      clearTimeout(timer);
+      setup(frame.document);
+    }, 0);
+    root.addEventListener('readystatechange', e => clearTimeout(timer), {
+      once: true
+    });
+  }
+
+}, 1000);
